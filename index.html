@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Guess mental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  color-scheme: light dark;
+  --ink: #1c2b33;
+  --ink-soft: #4c5f6a;
+  --paper: #eef3f1;
+  --card: #ffffff;
+  --line: #cfdcd8;
+  --chat-bg: #b9d3dd;
+  --bubble-other: #ffffff;
+  --bubble-mine: #8fe388;
+  --bubble-mine-ink: #14350f;
+  --accent: #06a94d;
+  --accent-ink: #ffffff;
+  --accent-soft: #d9f5e3;
+  --warn: #e2574c;
+  --warn-soft: #fdeceb;
+  --gold: #f5a623;
+  --header-bg: #20333d;
+  --header-ink: #f2f7f5;
+  --chip-bg: #ffffff;
+  --shadow: 0 2px 10px rgba(20, 45, 55,.14);
+  --radius: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8f0ee;
+    --ink-soft: #9db3ac;
+    --paper: #0d1512;
+    --card: #182420;
+    --line: #2c4038;
+    --chat-bg: #122028;
+    --bubble-other: #22333d;
+    --bubble-mine: #2e7d46;
+    --bubble-mine-ink: #eafff0;
+    --accent: #17c964;
+    --accent-soft: #14301f;
+    --warn-soft: #3a1d1a;
+    --chip-bg: #1d2f28;
+    --header-bg: #0a1210;
+    --shadow: 0 2px 10px rgba(0, 0, 0,.45);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+button, input { font: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+
+#app { max-width: 560px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ---------- header ---------- */
+header {
+  background: var(--header-bg);
+  color: var(--header-ink);
+  padding: calc(8px + env(safe-area-inset-top)) 14px 10px;
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 20;
+}
+header .ttl { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 19px; letter-spacing: .02em; white-space: nowrap; }
+header .ttl .q { color: #ffd94d; }
+#connPill {
+  margin-left: auto; font-size: 12px; font-weight: 700;
+  padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.14);
+  display: none; align-items: center; gap: 6px; white-space: nowrap;
+}
+#connPill.on { display: inline-flex; }
+#connPill .dot { width: 8px; height: 8px; border-radius: 50%; background: #ffb020; }
+#connPill.ok .dot { background: #2fe07c; }
+#connPill.ng .dot { background: #ff5a4d; }
+
+main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+.screen.active { display: flex; }
+.pad { padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+
+h1.game-logo {
+  font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800;
+  font-size: 40px; margin: 14px 0 2px; line-height: 1.15; text-align: center;
+}
+h1.game-logo .q { color: var(--accent); }
+.tagline { text-align: center; color: var(--ink-soft); font-size: 14px; margin: 0 0 20px; line-height: 1.7; }
+
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px;
+}
+.card h2 { font-size: 16px; margin: 0 0 6px; font-family: "M PLUS Rounded 1c", sans-serif; }
+.card p.desc { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; border-radius: 14px; padding: 0 18px; min-height: 52px;
+  font-weight: 800; font-size: 16px; font-family: "M PLUS Rounded 1c", sans-serif;
+  background: var(--accent); color: var(--accent-ink); width: 100%;
+}
+.btn:active { transform: scale(.98); }
+.btn.sub { background: var(--card); color: var(--ink); border: 2px solid var(--line); }
+.btn.ghost { background: transparent; color: var(--ink-soft); border: none; min-height: 44px; font-size: 14px; }
+.btn:disabled { opacity: .45; pointer-events: none; }
+
+.code-input, .text-input {
+  width: 100%; border: 2px solid var(--line); border-radius: 12px;
+  background: var(--card); color: var(--ink);
+  padding: 12px 14px; font-size: 17px; min-height: 52px; outline: none;
+}
+.code-input { text-transform: uppercase; letter-spacing: .35em; text-align: center; font-weight: 800; font-size: 22px; }
+.code-input:focus, .text-input:focus { border-color: var(--accent); }
+
+.room-code {
+  font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800;
+  font-size: 46px; letter-spacing: .3em; text-align: center; margin: 6px 0 2px; text-indent: .3em;
+}
+.status-line { text-align: center; font-size: 14px; color: var(--ink-soft); min-height: 1.5em; line-height: 1.6; }
+.status-line.err { color: var(--warn); font-weight: 700; }
+.spinner {
+  width: 26px; height: 26px; border-radius: 50%; margin: 10px auto;
+  border: 3px solid var(--line); border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } .btn:active { transform: none; } }
+
+.howto { font-size: 13px; color: var(--ink-soft); line-height: 1.9; padding-left: 1.2em; margin: 0; }
+.howto b { color: var(--ink); }
+
+/* ---------- setup ---------- */
+.role-banner {
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px;
+  font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 16px;
+  line-height: 1.6;
+  background: var(--accent-soft); color: var(--ink); border: 1.5px solid var(--accent);
+}
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.cat-btn {
+  border: 2px solid var(--line); background: var(--card); color: var(--ink);
+  border-radius: 14px; min-height: 58px; font-size: 16px; font-weight: 800;
+  font-family: "M PLUS Rounded 1c", sans-serif; padding: 8px 6px;
+}
+.cat-btn small { display: block; font-weight: 500; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+.cat-btn.sel { border-color: var(--accent); background: var(--accent-soft); }
+.theme-preview {
+  display: none; text-align: center; padding: 14px 10px; margin: 12px 0;
+  border: 2px dashed var(--gold); border-radius: 14px; background: var(--card);
+}
+.theme-preview.show { display: block; }
+.theme-preview .lbl { font-size: 12px; color: var(--ink-soft); }
+.theme-preview .val { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 30px; margin-top: 2px; word-break: break-all; }
+.or-row { display: flex; align-items: center; gap: 10px; margin: 12px 0; color: var(--ink-soft); font-size: 12px; }
+.or-row::before, .or-row::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.waiting-big { text-align: center; padding: 26px 10px; }
+.waiting-big .emoji { font-size: 44px; }
+.waiting-big p { color: var(--ink-soft); font-size: 14px; line-height: 1.8; }
+.waiting-big .my-theme { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 22px; color: var(--ink); }
+
+/* ---------- game / chat ---------- */
+#scr-game { background: var(--chat-bg); }
+.game-meta {
+  background: var(--card); border-bottom: 1px solid var(--line);
+  padding: 8px 14px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
+}
+.game-meta .pill { background: var(--accent-soft); border-radius: 999px; padding: 3px 10px; font-weight: 700; }
+.game-meta .mytheme { font-weight: 800; color: #92600a; }
+@media (prefers-color-scheme: dark) { .game-meta .mytheme { color: #ffd94d; } }
+#turnBar {
+  padding: 9px 14px; font-size: 14px; font-weight: 800; text-align: center;
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  background: #fff3cf; color: #6d4c00; border-bottom: 1px solid var(--line);
+}
+#turnBar.theirs { background: var(--card); color: var(--ink-soft); }
+@media (prefers-color-scheme: dark) { #turnBar { background: #3a2f10; color: #ffd94d; } #turnBar.theirs { background: var(--card); color: var(--ink-soft); } }
+#chatLog {
+  flex: 1; overflow-y: auto; padding: 14px 12px 8px;
+  display: flex; flex-direction: column; gap: 8px; min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.sys-msg {
+  align-self: center; background: rgba(30, 50, 60,.55); color: #fff;
+  font-size: 12px; padding: 5px 12px; border-radius: 999px; text-align: center; max-width: 92%;
+  line-height: 1.5;
+}
+@media (prefers-color-scheme: dark) { .sys-msg { background: rgba(255,255,255,.16); } }
+.row { display: flex; max-width: 100%; }
+.row.mine { justify-content: flex-end; }
+.row.theirs { justify-content: flex-start; }
+.bubble {
+  max-width: 78%; padding: 9px 13px; border-radius: 18px; font-size: 15px; line-height: 1.55;
+  word-break: break-word; white-space: pre-wrap; box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+.row.mine .bubble { background: var(--bubble-mine); color: var(--bubble-mine-ink); border-bottom-right-radius: 4px; }
+.row.theirs .bubble { background: var(--bubble-other); color: var(--ink); border-bottom-left-radius: 4px; }
+.bubble .who { display: block; font-size: 11px; font-weight: 800; opacity: .65; margin-bottom: 2px; }
+.bubble.answer-mark { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 17px; }
+.bubble.guess { border: 2px solid var(--gold); }
+.bubble.judge-ok { background: #ffe9a8; color: #5c4300; }
+.bubble.judge-ng { background: var(--warn-soft); color: var(--warn); }
+
+.action-dock {
+  background: var(--card); border-top: 1px solid var(--line);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+}
+.dock-note { font-size: 13px; color: var(--ink-soft); text-align: center; padding: 6px 0 2px; line-height: 1.6; }
+.answer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.answer-btns.two { grid-template-columns: 1fr 1fr; }
+.ans-btn {
+  min-height: 68px; border-radius: 16px; border: 2px solid var(--line);
+  background: var(--card); color: var(--ink); font-family: "M PLUS Rounded 1c", sans-serif;
+  font-weight: 800; font-size: 15px; line-height: 1.3; padding: 8px 2px;
+  pointer-events: auto; position: relative; z-index: 1;
+}
+.ans-btn .mark { display: block; font-size: 26px; line-height: 1.2; }
+.ans-btn.yes { border-color: #2fa84f; }
+.ans-btn.no { border-color: var(--warn); }
+.ans-btn.maybe { border-color: var(--gold); }
+.ans-btn:disabled { opacity: .35; pointer-events: none; }
+.ans-btn:not(:disabled):active { transform: scale(.97); background: var(--accent-soft); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.chip {
+  border: 1.5px solid var(--line); background: var(--chip-bg); color: var(--ink);
+  border-radius: 999px; padding: 0 12px; min-height: 36px; font-size: 13px; font-weight: 700;
+}
+.chip:active { background: var(--accent-soft); }
+.input-row { display: flex; gap: 8px; }
+.input-row .text-input { flex: 1; min-height: 50px; }
+.send-btn {
+  border: none; border-radius: 12px; background: var(--accent); color: #fff;
+  font-weight: 800; padding: 0 18px; min-height: 50px; font-size: 15px; white-space: nowrap;
+}
+.send-btn:disabled { opacity: .45; }
+.guess-row { margin-top: 8px; }
+.guess-mode-bar {
+  display: none; align-items: center; gap: 8px; margin-bottom: 8px;
+  background: #fff3cf; border: 1.5px solid var(--gold); color: #6d4c00;
+  border-radius: 12px; padding: 8px 12px; font-size: 13px; font-weight: 700;
+}
+.guess-mode-bar.show { display: flex; }
+@media (prefers-color-scheme: dark) { .guess-mode-bar { background: #3a2f10; color: #ffd94d; } }
+.guess-mode-bar button { margin-left: auto; border: none; background: transparent; color: inherit; font-weight: 800; min-height: 36px; padding: 0 8px; }
+
+/* ---------- result ---------- */
+.result-hero { text-align: center; padding: 20px 10px 6px; }
+.result-hero .emoji { font-size: 58px; }
+.result-hero h2 { font-family: "M PLUS Rounded 1c", sans-serif; font-size: 26px; margin: 8px 0 4px; }
+.result-theme {
+  text-align: center; font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800;
+  font-size: 24px; padding: 14px 10px; border: 2px dashed var(--gold); border-radius: 14px;
+  background: var(--card); margin: 10px 0; word-break: break-all;
+}
+.result-theme .lbl { display: block; font-size: 12px; color: var(--ink-soft); font-weight: 500; margin-bottom: 4px; font-family: inherit; }
+.result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 16px; }
+.result-stats .stat {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 12px 6px; text-align: center;
+}
+.result-stats .stat .num { font-family: "M PLUS Rounded 1c", sans-serif; font-weight: 800; font-size: 24px; }
+.result-stats .stat .cap { font-size: 12px; color: var(--ink-soft); }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+.hidden { display: none !important; }
+
+/* ---------- 通信デバッグ表示 ---------- */
+#dbgBar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  display: none; pointer-events: none;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10px; line-height: 1.5;
+  background: rgba(10, 22, 28, .85); color: #a9e8c3;
+  padding: 3px 8px calc(3px + env(safe-area-inset-bottom));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#dbgBar.show { display: block; }
+#dbgBar.warn { color: #ffd9a3; }
+.resync-btn {
+  margin-top: 8px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink-soft);
+  border-radius: 999px; padding: 0 16px; min-height: 38px; font-size: 12px; font-weight: 700;
+}
+.resync-btn:active { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="ttl">Guess <span class="q">mental</span> 🧠</div>
+  <span id="connPill"><span class="dot"></span><span id="connPillTxt">接続中</span></span>
+</header>
+
+<main>
+<!-- ===== メニュー ===== -->
+<section id="scr-menu" class="screen active">
+  <div class="pad">
+    <h1 class="game-logo">Guess <span class="q">mental</span></h1>
+    <p class="tagline">お互いにお題を決めて、質問を交代で出し合い、<br />先に相手のお題を当てた方の勝ち！</p>
+
+    <div class="card">
+      <h2>🏠 部屋を作る（ホスト）</h2>
+      <p class="desc">4文字の部屋コードが発行されます。相手にコードを伝えてください。ホストが最初の質問ターン（先手）です。</p>
+      <button class="btn" id="btnHost">部屋を作る</button>
+    </div>
+
+    <div class="card">
+      <h2>🔑 部屋に入る（ゲスト）</h2>
+      <p class="desc">相手から聞いた4文字の部屋コードを入力してください。ゲストは2番目の質問ターン（後手）です。</p>
+      <input class="code-input" id="joinCode" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" />
+      <div style="height:10px"></div>
+      <button class="btn" id="btnJoin">部屋に入る</button>
+    </div>
+
+    <div class="card">
+      <h2>📖 あそびかた</h2>
+      <ol class="howto">
+        <li>接続したら、<b>2人とも</b>カテゴリとお題を決めます（自分で入力 or ランダム）。相手には<b>カテゴリだけ</b>伝わり、お題は見えません。</li>
+        <li>両方のお題が決まったら対戦開始。<b>ホストから交代で</b>質問ターンを回します。</li>
+        <li>自分の質問ターンでは質問を送るか、<b>最終回答</b>を宣言できます。質問された側は <b>⭕ はい / ✖ いいえ / △ たぶん・わからない</b> の大きなボタンで答えます。答えが返るとターンが相手に移ります。</li>
+        <li>質問は<b>各自20問まで</b>、最終回答は<b>各自3回まで</b>。最終回答が3回外れたら負けです。</li>
+        <li>先に相手のお題を当てた方の勝ち！ 終わると両方のお題が公開されます。</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ロビー（接続待ち） ===== -->
+<section id="scr-lobby" class="screen">
+  <div class="pad">
+    <div class="card" style="text-align:center">
+      <div id="lobbyHostBox">
+        <p class="desc" style="margin-bottom:2px">あなたの部屋コード</p>
+        <div class="room-code" id="roomCodeView">····</div>
+        <button class="btn sub" id="btnCopyCode" style="min-height:44px;font-size:14px">📋 コードをコピー</button>
+        <div class="spinner" id="lobbySpinner"></div>
+        <p class="status-line" id="lobbyStatus">接続の準備中…</p>
+      </div>
+      <div id="lobbyGuestBox" class="hidden">
+        <div class="spinner" id="guestSpinner"></div>
+        <p class="status-line" id="guestStatus">部屋に接続中…</p>
+      </div>
+      <div id="lobbyErrorBox" class="hidden">
+        <p class="status-line err" id="lobbyError"></p>
+        <div style="height:8px"></div>
+        <button class="btn" id="btnRetry">もう一度つなぐ</button>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn ghost" id="btnLobbyBack">← もどる</button>
+    </div>
+    <p class="status-line">違うWiFi同士でもつながります（TURN中継対応）。<br />相手がこのページを開いて待っている間に接続してください。</p>
+  </div>
+</section>
+
+<!-- ===== お題設定（両方同時） ===== -->
+<section id="scr-setup" class="screen">
+  <div class="pad">
+    <div class="role-banner">🧠 両方ともお題を決めよう！<br />お題は相手に見えません（カテゴリだけ伝わります）。両方決まったら対戦開始です。</div>
+
+    <div id="setupForm">
+      <div class="card">
+        <h2>1️⃣ カテゴリを選ぶ</h2>
+        <div class="cat-grid" id="catGrid"></div>
+        <h2>2️⃣ お題を決める</h2>
+        <p class="desc">自分で入力するか、ランダムで決められます。</p>
+        <input class="text-input" id="themeInput" maxlength="30" placeholder="例：ラーメン" autocomplete="off" />
+        <div class="or-row">または</div>
+        <button class="btn sub" id="btnRandomTheme">🎲 ランダムで決める</button>
+        <div class="theme-preview" id="themePreview">
+          <div class="lbl">あなたのお題（相手には見えません）</div>
+          <div class="val" id="themePreviewVal"></div>
+        </div>
+        <div style="height:12px"></div>
+        <button class="btn" id="btnDecideTheme" disabled>このお題で決定！</button>
+      </div>
+    </div>
+
+    <div id="setupWait" class="card waiting-big hidden">
+      <div class="emoji">⏳</div>
+      <p>あなたのお題は決定済み</p>
+      <div class="my-theme" id="setupWaitTheme"></div>
+      <p id="setupWaitText">相手がお題を決めるのを待っています…</p>
+      <div class="spinner"></div>
+      <button class="resync-btn" id="btnResyncSetup" type="button">🔁 進まないときは再送信</button>
+    </div>
+
+    <p class="status-line" id="setupOppStatus"></p>
+  </div>
+</section>
+
+<!-- ===== ゲーム（チャット） ===== -->
+<section id="scr-game" class="screen">
+  <div class="game-meta" id="gameMeta"></div>
+  <div id="turnBar">…</div>
+  <div id="chatLog"></div>
+  <div class="action-dock" id="actionDock">
+    <!-- 自分の質問ターン -->
+    <div id="dockAsk" class="hidden">
+      <div class="guess-mode-bar" id="guessModeBar">
+        <span>🎯 最終回答モード：答えを入力して送信！</span>
+        <button id="btnCancelGuess">やめる</button>
+      </div>
+      <div class="chips" id="chipRow"></div>
+      <div class="input-row" id="qInputRow">
+        <input class="text-input" id="qInput" maxlength="60" placeholder="質問を入力…" autocomplete="off" />
+        <button class="send-btn" id="btnSendQ">送信</button>
+      </div>
+      <p class="dock-note hidden" id="askLimitNote"></p>
+      <div class="guess-row">
+        <button class="btn" id="btnGuessMode" style="background:var(--gold);color:#4a3200">🎯 最終回答する（あと<span id="guessLeft">3</span>回）</button>
+      </div>
+    </div>
+    <!-- 相手の質問に答える -->
+    <div id="dockAnswer" class="hidden">
+      <div class="answer-btns" id="answerBtns">
+        <button class="ans-btn yes" data-mark="yes"><span class="mark">⭕</span>はい</button>
+        <button class="ans-btn no" data-mark="no"><span class="mark">✖</span>いいえ</button>
+        <button class="ans-btn maybe" data-mark="maybe"><span class="mark">△</span>たぶん・<br />わからない</button>
+      </div>
+      <p class="dock-note" id="answerNote">相手の質問に答えてください！</p>
+    </div>
+    <!-- 最終回答の判定 -->
+    <div id="dockJudge" class="hidden">
+      <div class="answer-btns two">
+        <button class="ans-btn yes" id="btnJudgeOk"><span class="mark">⭕</span>正解！</button>
+        <button class="ans-btn no" id="btnJudgeNg"><span class="mark">✖</span>ちがう</button>
+      </div>
+      <p class="dock-note">相手の最終回答を判定してください</p>
+    </div>
+    <!-- 待ち -->
+    <div id="dockWait" class="hidden">
+      <div class="answer-btns" id="answerBtnsDisabled">
+        <button class="ans-btn yes" disabled><span class="mark">⭕</span>はい</button>
+        <button class="ans-btn no" disabled><span class="mark">✖</span>いいえ</button>
+        <button class="ans-btn maybe" disabled><span class="mark">△</span>たぶん・<br />わからない</button>
+      </div>
+      <p class="dock-note" id="waitNote">相手の番です…</p>
+      <div style="text-align:center">
+        <button class="resync-btn" id="btnResyncWait" type="button">🔁 進まないときは再送信</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 結果 ===== -->
+<section id="scr-result" class="screen">
+  <div class="pad">
+    <div class="result-hero">
+      <div class="emoji" id="resultEmoji">🎉</div>
+      <h2 id="resultTitle">あなたの勝ち！</h2>
+      <p class="status-line" id="resultReason"></p>
+    </div>
+    <div class="result-theme"><span class="lbl">相手のお題は…</span><span id="resultOppTheme">？</span></div>
+    <div class="result-theme"><span class="lbl">あなたのお題は…</span><span id="resultMyTheme">？</span></div>
+    <div class="result-stats">
+      <div class="stat"><div class="num" id="resultMyQ">0</div><div class="cap">あなたの質問数</div></div>
+      <div class="stat"><div class="num" id="resultOppQ">0</div><div class="cap">相手の質問数</div></div>
+      <div class="stat"><div class="num" id="resultMyG">0</div><div class="cap">あなたの最終回答</div></div>
+      <div class="stat"><div class="num" id="resultOppG">0</div><div class="cap">相手の最終回答</div></div>
+    </div>
+    <div class="stack">
+      <button class="btn" id="btnNextRound">🔄 もう一回（お題設定から）</button>
+      <button class="btn sub" id="btnEndGame">対戦を終わる</button>
+    </div>
+    <p class="status-line" id="resultNote" style="margin-top:10px"></p>
+  </div>
+</section>
+</main>
+<div id="dbgBar"></div>
+</div>
+
+<script>
+"use strict";
+var $ = function (id) { return document.getElementById(id); };
+
+/* ================= データ ================= */
+var CATEGORIES = {
+  food:   { name: "🍴 食べ物", sub: "たべもの", items: ["ラーメン","寿司","カレーライス","ハンバーガー","ピザ","たこ焼き","おにぎり","パンケーキ","アイスクリーム","チョコレート","りんご","バナナ","みかん","すいか","プリン","唐揚げ","焼肉","うどん","そば","オムライス"] },
+  animal: { name: "🐾 動物", sub: "いきもの", items: ["犬","猫","パンダ","ペンギン","ライオン","ゾウ","キリン","うさぎ","カメ","フクロウ","クマ","サル","馬","カエル","金魚","ハムスター","コアラ","キツネ","タヌキ","イルカ"] },
+  place:  { name: "🏯 場所・建物", sub: "ばしょ", items: ["学校","病院","駅","空港","図書館","公園","海","山","温泉","遊園地","水族館","映画館","コンビニ","お城","神社","東京タワー","富士山","教室","プール","動物園"] },
+  thing:  { name: "🧸 もの", sub: "どうぐ・もの", items: ["スマホ","自転車","傘","腕時計","眼鏡","テレビ","冷蔵庫","ギター","本","鉛筆","自動車","電車","飛行機","サッカーボール","椅子","ベッド","鍵","財布","カメラ","パソコン"] },
+  person: { name: "🧑‍⚕️ 人・職業", sub: "ひと", items: ["医者","先生","警察官","消防士","料理人","サッカー選手","歌手","宇宙飛行士","農家","大工","看護師","パイロット","画家","探偵","魔法使い","サンタクロース","忍者","お笑い芸人","美容師","電車の運転手"] },
+  number: { name: "🔢 数字", sub: "0〜999", items: [] }
+};
+var QUICK_CHIPS = ["生き物ですか？","食べられますか？","家の中にありますか？","大きいですか？","小さいですか？","毎日使いますか？","動きますか？","音が出ますか？","人間ですか？","色がついていますか？"];
+var MARKS = {
+  yes:   { sym: "⭕", label: "はい" },
+  no:    { sym: "✖", label: "いいえ" },
+  maybe: { sym: "△", label: "たぶん・わからない" }
+};
+var MAX_Q = 20, MAX_G = 3;
+
+/* ================= 状態 ================= */
+var peer = null, conn = null;
+var isHost = false, roomCode = "";
+var matchNo = 1;
+var myCategory = null, myTheme = null;      // 自分のお題（相手には送らない）
+var oppCategory = null, oppTheme = null;    // oppTheme は終了時のみ判明
+var myDecided = false, oppDecided = false, gameStarted = false;
+var turnSide = "host";                       // 'host' | 'guest'：今の質問ターン
+var phase = "ask";                           // 'ask' | 'answer' | 'judge'
+var myQ = 0, oppQ = 0, myG = 0, oppG = 0;
+var guessMode = false;
+var roundOver = false;
+var connectTimer = null;
+var peerLibLoading = false;
+var disconnectedShown = false;
+/* 通信の信頼性まわり：連番で重複を弾き、最後の送信を再送できるようにする */
+var PROTOCOL_V = 2;
+var mySeq = 0, peerSeq = 0;
+var lastSentObj = null, lastCatObj = null;
+var oppVersion = null;
+var catResendTimer = null, waitResyncTimer = null, versionHintTimer = null;
+
+/* ================= 通信デバッグ表示 ================= */
+function dbg(txt, warn) {
+  var bar = $("dbgBar");
+  if (bar) {
+    bar.classList.add("show");
+    bar.classList.toggle("warn", !!warn);
+    var t = new Date();
+    function p2(n) { return ("0" + n).slice(-2); }
+    bar.textContent = "🔧 " + p2(t.getHours()) + ":" + p2(t.getMinutes()) + ":" + p2(t.getSeconds()) + " " + txt;
+  }
+  if (window.console && console.log) console.log("[gm] " + txt);
+}
+if (window.addEventListener) {
+  window.addEventListener("error", function (e) {
+    dbg("⚠️ エラー: " + (e && e.message ? e.message : "不明なエラー"), true);
+  });
+}
+
+function mySide() { return isHost ? "host" : "guest"; }
+function isMyTurn() { return turnSide === mySide(); }
+function qOf(side) { return side === mySide() ? myQ : oppQ; }
+function gOf(side) { return side === mySide() ? myG : oppG; }
+function exhausted(side) { return qOf(side) >= MAX_Q && gOf(side) >= MAX_G; }
+function otherSide(side) { return side === "host" ? "guest" : "host"; }
+
+/* ================= PeerJS 遅延ロード ================= */
+function loadPeerLib(cb) {
+  if (window.Peer) { cb(null); return; }
+  if (peerLibLoading) { var t = setInterval(function () { if (window.Peer) { clearInterval(t); cb(null); } }, 200); return; }
+  peerLibLoading = true;
+  var s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js";
+  s.onload = function () { cb(null); };
+  s.onerror = function () { peerLibLoading = false; cb(new Error("通信ライブラリの読み込みに失敗しました。ネット接続を確認してください。")); };
+  document.head.appendChild(s);
+}
+var ICE_CONFIG = { iceServers: [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+  { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:a.relay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:a.relay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+  { urls: "turn:a.relay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+]};
+function makeCode() {
+  var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  var c = "";
+  for (var i = 0; i < 4; i++) c += chars.charAt(Math.floor(Math.random() * chars.length));
+  return c;
+}
+function peerIdFor(code) { return "guessmental-" + code.toLowerCase(); }
+
+/* ================= 画面遷移 ================= */
+function show(id) {
+  var screens = document.querySelectorAll(".screen");
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove("active");
+  $(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+function setPill(state, txt) {
+  var pill = $("connPill");
+  pill.className = state ? "on " + state : "";
+  $("connPillTxt").textContent = txt;
+}
+function stopCatResend() { if (catResendTimer) { clearInterval(catResendTimer); catResendTimer = null; } }
+function clearWaitResync() { if (waitResyncTimer) { clearTimeout(waitResyncTimer); waitResyncTimer = null; } }
+function cleanupPeer() {
+  if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
+  stopCatResend();
+  clearWaitResync();
+  if (versionHintTimer) { clearTimeout(versionHintTimer); versionHintTimer = null; }
+  connOpenFlag = false;
+  try { if (conn) conn.close(); } catch (e) {}
+  try { if (peer) peer.destroy(); } catch (e) {}
+  conn = null; peer = null;
+}
+function backToMenu() {
+  cleanupPeer();
+  isHost = false; roomCode = ""; matchNo = 1;
+  gameStarted = false; roundOver = false;
+  setPill("", "");
+  show("scr-menu");
+}
+
+/* ================= ホスト ================= */
+function startHost() {
+  show("scr-lobby");
+  $("lobbyHostBox").classList.remove("hidden");
+  $("lobbyGuestBox").classList.add("hidden");
+  $("lobbyErrorBox").classList.add("hidden");
+  $("lobbySpinner").classList.remove("hidden");
+  $("lobbyStatus").textContent = "部屋の準備中…";
+  setPill("", "接続中");
+  $("connPill").classList.add("on");
+  loadPeerLib(function (err) {
+    if (err) { lobbyFail(err.message); return; }
+    cleanupPeer();
+    isHost = true;
+    roomCode = makeCode();
+    $("roomCodeView").textContent = roomCode;
+    peer = new Peer(peerIdFor(roomCode), { config: ICE_CONFIG, debug: 0 });
+    peer.on("open", function () {
+      $("lobbyStatus").textContent = "相手の接続を待っています…コードを伝えてね";
+      setPill("", "待機中");
+      $("connPill").classList.add("on");
+    });
+    peer.on("connection", function (c) { conn = c; wireConn(); });
+    peer.on("error", function (e) {
+      if (e.type === "unavailable-id") {
+        try { peer.destroy(); } catch (x) {}
+        roomCode = makeCode();
+        $("roomCodeView").textContent = roomCode;
+        peer = new Peer(peerIdFor(roomCode), { config: ICE_CONFIG, debug: 0 });
+        peer.on("open", function () { $("lobbyStatus").textContent = "相手の接続を待っています…コードを伝えてね"; });
+        peer.on("connection", function (c) { conn = c; wireConn(); });
+        peer.on("error", function (e2) { lobbyFail(peerErrText(e2)); });
+        return;
+      }
+      if (!conn) lobbyFail(peerErrText(e));
+    });
+  });
+}
+
+/* ================= ゲスト ================= */
+function startGuest() {
+  var code = $("joinCode").value.trim().toUpperCase();
+  if (code.length !== 4) { $("joinCode").focus(); $("joinCode").style.borderColor = "var(--warn)"; return; }
+  $("joinCode").style.borderColor = "";
+  roomCode = code;
+  isHost = false;
+  show("scr-lobby");
+  $("lobbyHostBox").classList.add("hidden");
+  $("lobbyGuestBox").classList.remove("hidden");
+  $("lobbyErrorBox").classList.add("hidden");
+  $("guestStatus").textContent = "部屋「" + code + "」に接続中…（最大20秒）";
+  setPill("", "接続中");
+  $("connPill").classList.add("on");
+  loadPeerLib(function (err) {
+    if (err) { lobbyFail(err.message); return; }
+    cleanupPeer();
+    peer = new Peer(peerIdFor(makeCode()) + "-" + Date.now().toString(36), { config: ICE_CONFIG, debug: 0 });
+    peer.on("open", function () {
+      conn = peer.connect(peerIdFor(roomCode), { reliable: true });
+      wireConn();
+      connectTimer = setTimeout(function () {
+        if (!gameStarted && !myDecided && !oppDecided && !connOpenFlag) lobbyFail("20秒たっても接続できませんでした。相手が部屋を作って待っているか、コードが合っているか確認してください。");
+      }, 20000);
+    });
+    peer.on("error", function (e) {
+      if (connOpenFlag) return;
+      if (e.type === "peer-unavailable") { lobbyFail("部屋「" + roomCode + "」が見つかりません。コードを確認するか、相手に部屋を作り直してもらってください。"); return; }
+      lobbyFail(peerErrText(e));
+    });
+  });
+}
+var connOpenFlag = false;
+function peerErrText(e) {
+  if (!e) return "接続エラーが発生しました。";
+  if (e.type === "network" || e.type === "server-error") return "通信サーバーに接続できませんでした。ネット接続を確認して、もう一度試してください。";
+  if (e.type === "browser-incompatible") return "このブラウザはオンライン対戦に対応していません。";
+  return "接続エラー（" + (e.type || "不明") + "）。もう一度試してください。";
+}
+function lobbyFail(msg) {
+  dbg("接続失敗: " + msg, true);
+  if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
+  $("lobbyHostBox").classList.add("hidden");
+  $("lobbyGuestBox").classList.add("hidden");
+  $("lobbyErrorBox").classList.remove("hidden");
+  $("lobbyError").textContent = "⚠️ " + msg;
+  setPill("ng", "接続失敗");
+}
+
+/* ================= 接続の配線 ================= */
+function wireConn() {
+  conn.on("open", function () {
+    if (connectTimer) { clearTimeout(connectTimer); connectTimer = null; }
+    connOpenFlag = true;
+    mySeq = 0; peerSeq = 0; lastSentObj = null; lastCatObj = null; oppVersion = null;
+    setPill("ok", "接続完了");
+    dbg("接続が開きました");
+    send({ t: "hello", v: PROTOCOL_V }, false);
+    matchNo = 1;
+    startSetup();
+  });
+  conn.on("data", onMessage);
+  conn.on("close", function () {
+    dbg("接続が閉じられました", true);
+    onDisconnected();
+  });
+  conn.on("error", function (e) {
+    // PeerJSは「送信タイミングが合わない」等の軽い理由でも conn の error を出す。
+    // ここで切断扱いにすると対戦が止まってしまうので、記録だけして続行する。
+    // 本当に切れた場合は PeerJS 自身が close を出すので、切断判定は close に任せる。
+    dbg("通信エラー（対戦は継続）: " + (e && e.type ? e.type : (e && e.message ? e.message : "不明")), true);
+  });
+  // ※ICEの "disconnected" は一時的に出る正常な状態変化なので、ここでは監視しない。
+  //   以前は disconnected でも切断扱いにしていたため、電波の揺れで対戦画面が
+  //   固まってしまう不具合があった（PeerJS自身も disconnected では切断しない）。
+}
+function onDisconnected() {
+  if (disconnectedShown) return;
+  disconnectedShown = true;
+  setPill("ng", "切断されました");
+  stopCatResend();
+  clearWaitResync();
+  if ($("scr-setup").classList.contains("active")) {
+    $("setupOppStatus").textContent = "⚠️ 接続が切れてしまいました。タイトルに戻って、もう一度つないでください。";
+  }
+  if ($("scr-lobby").classList.contains("active")) {
+    $("lobbyStatus").textContent = "⚠️ 接続が切れてしまいました。";
+    $("guestStatus").textContent = "⚠️ 接続が切れてしまいました。";
+  }
+  if ($("scr-game").classList.contains("active")) {
+    addSys("⚠️ 相手との接続が切れました");
+    $("dockAsk").classList.add("hidden");
+    $("dockAnswer").classList.add("hidden");
+    $("dockJudge").classList.add("hidden");
+    $("dockWait").classList.remove("hidden");
+    $("answerBtnsDisabled").classList.add("hidden");
+    $("waitNote").innerHTML = "接続が切れてしまいました…<br /><button class='btn sub' id='btnReloadTop' style='margin-top:8px;min-height:44px'>タイトルへもどる</button>";
+    var rb = $("btnReloadTop");
+    if (rb) rb.addEventListener("click", function () { location.reload(); });
+  }
+}
+/* 送信：連番を付け、最後の送信を覚えておく（再送・重複判定のため）。
+   keepLast === false の制御メッセージ（hello / rsync / reveal）は再送対象にしない。 */
+function send(obj, keepLast) {
+  if (!conn || !conn.open) { dbg("送信できません（未接続）: " + (obj && obj.t), true); return false; }
+  obj.s = ++mySeq;
+  if (keepLast !== false) lastSentObj = obj;
+  try {
+    conn.send(obj);
+    dbg("送信 " + obj.t + " #" + obj.s);
+    return true;
+  } catch (e) {
+    dbg("送信エラー " + obj.t + ": " + (e && e.message ? e.message : e), true);
+    return false;
+  }
+}
+/* 最後に送ったメッセージを同じ連番のまま送り直す。
+   相手が既に受け取っていた場合は相手側の重複判定で捨てられるので安全。 */
+function resendLast() {
+  if (!lastSentObj) { dbg("再送できる送信履歴がありません", true); return; }
+  if (!conn || !conn.open) { dbg("再送できません（未接続）", true); return; }
+  try {
+    conn.send(lastSentObj);
+    dbg("再送 " + lastSentObj.t + " #" + lastSentObj.s);
+  } catch (e) {
+    dbg("再送エラー: " + (e && e.message ? e.message : e), true);
+  }
+}
+/* 自分の最後の送信を送り直しつつ、相手にも最後の送信の送り直しを頼む */
+function requestResync() {
+  resendLast();
+  send({ t: "rsync" }, false);
+}
+
+/* ================= お題設定（両方同時） ================= */
+var selectedCat = null, decidedTheme = "";
+function startSetup() {
+  disconnectedShown = false;
+  stopCatResend();
+  lastCatObj = null;
+  myCategory = null; myTheme = null; oppCategory = null; oppTheme = null;
+  myDecided = false; oppDecided = false; gameStarted = false;
+  myQ = 0; oppQ = 0; myG = 0; oppG = 0;
+  turnSide = "host"; phase = "ask"; guessMode = false; roundOver = false;
+  selectedCat = null; decidedTheme = "";
+  // 相手から hello（バージョン通知）が来ていない場合は、相手が古い版を
+  // 開いている可能性があるのでヒントを出す（旧版とは通信が噛み合わない）
+  if (versionHintTimer) clearTimeout(versionHintTimer);
+  versionHintTimer = setTimeout(function () {
+    if (!gameStarted && oppVersion === null && !oppDecided) {
+      $("setupOppStatus").textContent = "💡 相手とまだつながっていません。相手が古いバージョンを開いているかも？ 2人ともリンクを開き直してみてください。";
+      dbg("相手から hello が届いていません（旧版を開いている可能性）", true);
+    }
+  }, 8000);
+  $("themeInput").value = "";
+  $("themePreview").classList.remove("show");
+  $("btnDecideTheme").disabled = true;
+  $("setupForm").classList.remove("hidden");
+  $("setupWait").classList.add("hidden");
+  $("setupOppStatus").textContent = "相手もお題を考え中…";
+  var cats = document.querySelectorAll(".cat-btn");
+  for (var i = 0; i < cats.length; i++) cats[i].classList.remove("sel");
+  show("scr-setup");
+}
+function refreshDecideBtn() {
+  var t = $("themeInput").value.trim() || decidedTheme;
+  $("btnDecideTheme").disabled = !(selectedCat && t);
+  if (t) {
+    $("themePreviewVal").textContent = t;
+    $("themePreview").classList.add("show");
+  }
+}
+function decideTheme() {
+  var t = $("themeInput").value.trim() || decidedTheme;
+  if (!selectedCat || !t || myDecided) return;
+  myCategory = selectedCat;
+  myTheme = t;
+  myDecided = true;
+  lastCatObj = { t: "cat", cat: myCategory };
+  send(lastCatObj);
+  startCatResend();
+  $("setupForm").classList.add("hidden");
+  $("setupWait").classList.remove("hidden");
+  $("setupWaitTheme").textContent = "「" + myTheme + "」（" + CATEGORIES[myCategory].name + "）";
+  $("setupWaitText").textContent = oppDecided
+    ? "相手は準備OK！ まもなく開始します…"
+    : "相手がお題を決めるのを待っています…";
+  $("setupOppStatus").textContent = oppDecided
+    ? "相手はお題を決めました（カテゴリ：" + CATEGORIES[oppCategory].name + "）"
+    : "相手もお題を考え中…";
+  checkStart();
+}
+function checkStart() {
+  if (myDecided && oppDecided && !gameStarted) startGame();
+}
+/* お題通知（cat）が相手に届かないと対戦が始まらないので、開始するまで
+   3秒ごとに同じ連番で送り直す（届いていれば相手側で重複として捨てられる） */
+function startCatResend() {
+  stopCatResend();
+  catResendTimer = setInterval(function () {
+    if (gameStarted || !myDecided || !lastCatObj) { stopCatResend(); return; }
+    if (conn && conn.open) {
+      try { conn.send(lastCatObj); dbg("cat を再送 #" + lastCatObj.s); } catch (e) {}
+    }
+  }, 3000);
+}
+
+/* ================= ゲーム開始 ================= */
+function startGame() {
+  stopCatResend();
+  if (versionHintTimer) { clearTimeout(versionHintTimer); versionHintTimer = null; }
+  gameStarted = true;
+  roundOver = false;
+  turnSide = "host"; phase = "ask";
+  myQ = 0; oppQ = 0; myG = 0; oppG = 0; guessMode = false;
+  $("chatLog").innerHTML = "";
+  $("qInput").value = "";
+  addSys("🎮 対戦スタート！（" + matchNo + "試合目）");
+  addSys("相手のお題のカテゴリは「" + CATEGORIES[oppCategory].name + "」、あなたのお題は「" + myTheme + "」（" + CATEGORIES[myCategory].name + "）");
+  addSys(isHost ? "あなたが先手です。最初の質問をどうぞ！" : "相手が先手です。質問が届いたら ⭕ ✖ △ で答えてね");
+  renderAll();
+  show("scr-game");
+}
+function renderAll() { renderMeta(); renderTurn(); renderDock(); }
+function renderMeta() {
+  var html = "<span class='pill'>" + matchNo + "試合目</span>" +
+    "<span>🏷️ 相手：" + (oppCategory ? CATEGORIES[oppCategory].name : "") + "</span>" +
+    "<span>❓ あなた " + myQ + "/" + MAX_Q + " ・ 相手 " + oppQ + "/" + MAX_Q + "</span>" +
+    "<span>🎯 最終回答 あなた あと" + (MAX_G - myG) + " ・ 相手 あと" + (MAX_G - oppG) + "</span>";
+  if (myTheme) html += "<span class='mytheme'>あなたのお題：「" + escapeHtml(myTheme) + "」</span>";
+  $("gameMeta").innerHTML = html;
+  $("guessLeft").textContent = String(MAX_G - myG);
+}
+function stateText() {
+  if (roundOver) return "対戦終了！";
+  if (phase === "ask") return isMyTurn() ? "🟢 あなたの質問ターンです" : "⚪ 相手の質問ターンです";
+  if (phase === "answer") return isMyTurn() ? "⏳ 相手の回答を待っています…" : "🟢 相手の質問に答えてください！";
+  if (phase === "judge") return isMyTurn() ? "⏳ 相手の判定を待っています…" : "🟢 相手の最終回答を判定してください！";
+  return "";
+}
+function renderTurn() {
+  var bar = $("turnBar");
+  bar.textContent = stateText();
+  bar.className = (phase === "ask" ? !isMyTurn() : isMyTurn()) ? "theirs" : "";
+  bar.id = "turnBar";
+}
+/* 待ちが長い場合は一度だけ自動で再送信して、片側だけ止まるのを防ぐ */
+function armWaitResync() {
+  clearWaitResync();
+  waitResyncTimer = setTimeout(function () {
+    waitResyncTimer = null;
+    if (roundOver || !conn || !conn.open) return;
+    dbg("待ち時間が長いため自動で再送信しました");
+    requestResync();
+  }, 15000);
+}
+function renderDock() {
+  clearWaitResync();
+  $("dockAsk").classList.add("hidden");
+  $("dockAnswer").classList.add("hidden");
+  $("dockJudge").classList.add("hidden");
+  $("dockWait").classList.add("hidden");
+  if (roundOver) {
+    $("dockWait").classList.remove("hidden");
+    $("answerBtnsDisabled").classList.add("hidden");
+    $("waitNote").textContent = "対戦終了！";
+    return;
+  }
+  if (phase === "ask" && isMyTurn()) {
+    $("dockAsk").classList.remove("hidden");
+    updateAskUI();
+  } else if (phase === "answer" && !isMyTurn()) {
+    $("dockAnswer").classList.remove("hidden");
+    setAnswerEnabled(true);
+    $("answerNote").textContent = "相手の質問に、上のボタンで答えてください！";
+  } else if (phase === "judge" && !isMyTurn()) {
+    $("dockJudge").classList.remove("hidden");
+  } else {
+    $("dockWait").classList.remove("hidden");
+    var showDisabledBtns = (phase === "ask" && !isMyTurn());
+    $("answerBtnsDisabled").classList.toggle("hidden", !showDisabledBtns);
+    if (phase === "ask") $("waitNote").textContent = "相手の質問を待っています（質問が届くと回答ボタンが押せるようになります）";
+    else if (phase === "answer") $("waitNote").textContent = "相手の回答を待っています…";
+    else if (phase === "judge") $("waitNote").textContent = "相手の判定を待っています…";
+    armWaitResync();
+  }
+}
+function setAnswerEnabled(on) {
+  var btns = document.querySelectorAll("#answerBtns .ans-btn");
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = !on;
+}
+function updateAskUI() {
+  var qLeft = myQ < MAX_Q, gLeft = myG < MAX_G;
+  $("guessModeBar").classList.toggle("show", guessMode);
+  $("chipRow").style.display = (guessMode || !qLeft) ? "none" : "";
+  $("qInputRow").style.display = (!guessMode && !qLeft) ? "none" : "";
+  var note = $("askLimitNote");
+  if (!qLeft && !guessMode) {
+    note.textContent = "質問は" + MAX_Q + "問使い切りました。最終回答のみできます";
+    note.classList.remove("hidden");
+  } else if (!gLeft) {
+    note.textContent = "最終回答は使い切りました。質問のみできます";
+    note.classList.remove("hidden");
+  } else {
+    note.classList.add("hidden");
+  }
+  $("qInput").placeholder = guessMode ? "最終回答を入力…（例：ラーメン）" : "質問を入力…";
+  $("btnSendQ").textContent = guessMode ? "回答！" : "送信";
+  $("btnGuessMode").style.display = (guessMode || !gLeft) ? "none" : "";
+}
+
+/* ================= チャット表示 ================= */
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function scrollChat() { var log = $("chatLog"); log.scrollTop = log.scrollHeight; }
+function addSys(text) {
+  var d = document.createElement("div");
+  d.className = "sys-msg"; d.textContent = text;
+  $("chatLog").appendChild(d); scrollChat();
+}
+function addBubble(side, cls, who, text) {
+  var row = document.createElement("div");
+  row.className = "row " + side;
+  var b = document.createElement("div");
+  b.className = "bubble " + (cls || "");
+  if (who) { var w = document.createElement("span"); w.className = "who"; w.textContent = who; b.appendChild(w); }
+  b.appendChild(document.createTextNode(text));
+  row.appendChild(b);
+  $("chatLog").appendChild(row); scrollChat();
+}
+function showQuestion(text, fromMe) { addBubble(fromMe ? "mine" : "theirs", "", fromMe ? "あなた" : "相手", "❓ " + text); }
+function showAnswer(mark, fromMe) {
+  var m = MARKS[mark] || MARKS.maybe;
+  addBubble(fromMe ? "mine" : "theirs", "answer-mark", fromMe ? "あなた" : "相手", m.sym + " " + m.label);
+}
+function showGuess(text, fromMe) { addBubble(fromMe ? "mine" : "theirs", "guess", fromMe ? "あなた" : "相手", "🎯 最終回答：" + text); }
+function showJudge(ok, fromMe) {
+  addBubble(fromMe ? "mine" : "theirs", "answer-mark " + (ok ? "judge-ok" : "judge-ng"), fromMe ? "あなた" : "相手", ok ? "⭕ 正解！" : "✖ ちがう");
+}
+
+/* ================= ターン進行 ================= */
+function flipTurnAfterResponse() {
+  // 回答・判定（不正解）が返った時点でターン交代。両端末で同じ計算をする
+  turnSide = otherSide(turnSide);
+  phase = "ask";
+  if (exhausted(turnSide) && exhausted(otherSide(turnSide))) {
+    initiateEnd("draw", "2人とも質問と最終回答を使い切りました");
+    return;
+  }
+  if (exhausted(turnSide)) {
+    addSys("相手は質問も最終回答も使い切ったので、もう一度あなたのターンです");
+    turnSide = otherSide(turnSide);
+  }
+  renderAll();
+}
+function submitInput() {
+  var text = $("qInput").value.trim();
+  if (!text || roundOver || phase !== "ask" || !isMyTurn()) return;
+  if (guessMode) {
+    if (myG >= MAX_G) return;
+    myG++;
+    phase = "judge";
+    guessMode = false;
+    showGuess(text, true);
+    send({ t: "g", text: text });
+    $("qInput").value = "";
+    renderAll();
+  } else {
+    if (myQ >= MAX_Q) return;
+    myQ++;
+    phase = "answer";
+    showQuestion(text, true);
+    send({ t: "q", text: text });
+    $("qInput").value = "";
+    renderAll();
+  }
+}
+function answerQuestion(mark) {
+  if (roundOver || phase !== "answer" || isMyTurn()) return;
+  phase = "ask";
+  showAnswer(mark, true);
+  send({ t: "a", mark: mark });
+  flipTurnAfterResponse();
+}
+function judgeGuess(ok) {
+  if (roundOver || phase !== "judge" || isMyTurn()) return;
+  showJudge(ok, true);
+  if (ok) {
+    send({ t: "j", ok: true, theme: myTheme });
+    // 勝者は質問ターン側（相手）。終局処理は相手からの end を待たず、こちらでも結果を出す
+    oppThemeKnownByJudge = null;
+    finishLocally(turnSide, "相手が最終回答を当てました！");
+    send({ t: "reveal", theme: myTheme }, false);
+  } else {
+    send({ t: "j", ok: false });
+    if (gOf(turnSide) >= MAX_G) {
+      initiateEnd(mySide(), "相手の最終回答が" + MAX_G + "回すべて外れました");
+    } else {
+      flipTurnAfterResponse();
+    }
+  }
+}
+var oppThemeKnownByJudge = null;
+
+/* ================= 終局 ================= */
+function initiateEnd(winner, reason) {
+  if (roundOver) return;
+  send({ t: "end", winner: winner, reason: reason, theme: myTheme });
+  finishLocally(winner, reason);
+}
+function finishLocally(winner, reason) {
+  roundOver = true;
+  renderAll();
+  showResult(winner, reason);
+}
+function showResult(winner, reason) {
+  var isDraw = winner === "draw";
+  var iWin = !isDraw && winner === mySide();
+  $("resultEmoji").textContent = isDraw ? "🤝" : (iWin ? "🎉" : "😢");
+  $("resultTitle").textContent = isDraw ? "引き分け" : (iWin ? "あなたの勝ち！" : "相手の勝ち…");
+  $("resultReason").textContent = reason || "";
+  $("resultMyTheme").textContent = myTheme || "？";
+  $("resultOppTheme").textContent = oppTheme || "（公開待ち…）";
+  $("resultMyQ").textContent = myQ;
+  $("resultOppQ").textContent = oppQ;
+  $("resultMyG").textContent = myG;
+  $("resultOppG").textContent = oppG;
+  $("resultNote").textContent = "";
+  $("btnNextRound").disabled = false;
+  show("scr-result");
+}
+function refreshResultOppTheme() {
+  if ($("scr-result").classList.contains("active") && oppTheme) {
+    $("resultOppTheme").textContent = oppTheme;
+  }
+}
+
+/* ================= 受信 ================= */
+function onMessage(msg) {
+  if (!msg || !msg.t) return;
+  if (typeof msg.s === "number" && msg.s <= peerSeq) {
+    dbg("受信 " + msg.t + " #" + msg.s + "（重複のため破棄）");
+    return;
+  }
+  try {
+    handleMessage(msg);
+    // 処理が成功した時だけ連番を進める。途中で失敗したら再送で回復できる
+    if (typeof msg.s === "number") peerSeq = msg.s;
+    dbg("受信 " + msg.t + (typeof msg.s === "number" ? " #" + msg.s : "（番号なし）"));
+  } catch (e) {
+    dbg("受信処理エラー " + msg.t + ": " + (e && e.message ? e.message : e), true);
+  }
+}
+function handleMessage(msg) {
+  switch (msg.t) {
+    case "hello":
+      oppVersion = msg.v;
+      if (msg.v !== PROTOCOL_V) {
+        dbg("⚠️ 相手のバージョンが違います（v" + msg.v + "）", true);
+        if ($("scr-setup").classList.contains("active")) {
+          $("setupOppStatus").textContent = "⚠️ 相手とバージョンが違います。2人ともページを開き直してください。";
+        }
+      }
+      break;
+    case "rsync":
+      // 相手が止まっているようなので、自分の最後の送信を送り直す
+      resendLast();
+      break;
+    case "cat":
+      if (gameStarted) break;
+      oppCategory = msg.cat;
+      oppDecided = true;
+      if (myDecided) {
+        $("setupWaitText").textContent = "相手は準備OK！ まもなく開始します…";
+        $("setupOppStatus").textContent = "相手はお題を決めました（カテゴリ：" + CATEGORIES[oppCategory].name + "）";
+      } else {
+        $("setupOppStatus").textContent = "相手はお題を決めました（カテゴリ：" + CATEGORIES[oppCategory].name + "）。あなたも決めよう！";
+      }
+      checkStart();
+      break;
+    case "q":
+      if (roundOver) return;
+      oppQ++;
+      phase = "answer";
+      showQuestion(msg.text, false);
+      renderAll();
+      break;
+    case "a":
+      if (roundOver) return;
+      showAnswer(msg.mark, false);
+      flipTurnAfterResponse();
+      break;
+    case "g":
+      if (roundOver) return;
+      oppG++;
+      phase = "judge";
+      showGuess(msg.text, false);
+      renderAll();
+      break;
+    case "j":
+      if (roundOver) return;
+      showJudge(msg.ok, false);
+      if (msg.ok) {
+        oppTheme = msg.theme || null;
+        // 勝者は自分（質問ターン側）。自分のテーマを相手に送り、結果を表示
+        send({ t: "end", winner: mySide(), reason: "最終回答が当たりました！", theme: myTheme });
+        finishLocally(mySide(), "最終回答が当たりました！");
+      } else {
+        if (myG >= MAX_G) {
+          // 自分の最終回答が尽きた → 相手の勝ち。end は判定側からも来るが二重表示しない
+          finishLocally(otherSide(mySide()), "あなたの最終回答が" + MAX_G + "回すべて外れました");
+        } else {
+          flipTurnAfterResponse();
+        }
+      }
+      break;
+    case "end":
+      oppTheme = msg.theme || oppTheme;
+      if (!roundOver) {
+        send({ t: "reveal", theme: myTheme }, false);
+        finishLocally(msg.winner, msg.reason);
+      } else {
+        refreshResultOppTheme();
+      }
+      break;
+    case "reveal":
+      oppTheme = msg.theme || oppTheme;
+      refreshResultOppTheme();
+      break;
+    case "next":
+      matchNo++;
+      startSetup();
+      break;
+    case "bye":
+      cleanupPeer();
+      connOpenFlag = false;
+      setPill("", "");
+      show("scr-menu");
+      break;
+  }
+}
+
+/* ================= イベント配線 ================= */
+(function buildCats() {
+  var grid = $("catGrid");
+  Object.keys(CATEGORIES).forEach(function (key) {
+    var c = CATEGORIES[key];
+    var b = document.createElement("button");
+    b.className = "cat-btn"; b.dataset.cat = key; b.type = "button";
+    b.innerHTML = escapeHtml(c.name) + "<small>" + escapeHtml(c.sub) + "</small>";
+    b.addEventListener("click", function () {
+      selectedCat = key;
+      decidedTheme = "";
+      $("themeInput").value = "";
+      var all = document.querySelectorAll(".cat-btn");
+      for (var i = 0; i < all.length; i++) all[i].classList.toggle("sel", all[i].dataset.cat === key);
+      if (key === "number") $("themeInput").placeholder = "例：42（0〜999）";
+      else $("themeInput").placeholder = "例：" + c.items[0];
+      $("themePreview").classList.remove("show");
+      refreshDecideBtn();
+    });
+    grid.appendChild(b);
+  });
+})();
+(function buildChips() {
+  var row = $("chipRow");
+  QUICK_CHIPS.forEach(function (q) {
+    var b = document.createElement("button");
+    b.className = "chip"; b.textContent = q; b.type = "button";
+    b.addEventListener("click", function () {
+      if (guessMode) return;
+      $("qInput").value = q;
+      submitInput();
+    });
+    row.appendChild(b);
+  });
+})();
+
+$("themeInput").addEventListener("input", function () { decidedTheme = ""; refreshDecideBtn(); });
+$("btnRandomTheme").addEventListener("click", function () {
+  if (!selectedCat) {
+    $("catGrid").style.outline = "2px solid var(--warn)";
+    setTimeout(function () { $("catGrid").style.outline = ""; }, 900);
+    return;
+  }
+  if (selectedCat === "number") decidedTheme = String(Math.floor(Math.random() * 1000));
+  else {
+    var items = CATEGORIES[selectedCat].items;
+    decidedTheme = items[Math.floor(Math.random() * items.length)];
+  }
+  $("themeInput").value = "";
+  refreshDecideBtn();
+});
+$("btnDecideTheme").addEventListener("click", decideTheme);
+
+$("btnHost").addEventListener("click", startHost);
+$("btnJoin").addEventListener("click", startGuest);
+$("joinCode").addEventListener("keydown", function (e) { if (e.key === "Enter") startGuest(); });
+$("joinCode").addEventListener("input", function () { this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
+$("btnRetry").addEventListener("click", function () { if (isHost) startHost(); else startGuest(); });
+$("btnLobbyBack").addEventListener("click", backToMenu);
+$("btnCopyCode").addEventListener("click", function () {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(roomCode).then(function () {
+      $("btnCopyCode").textContent = "✅ コピーしました";
+      setTimeout(function () { $("btnCopyCode").textContent = "📋 コードをコピー"; }, 1600);
+    }, function () {});
+  }
+});
+
+$("btnSendQ").addEventListener("click", submitInput);
+$("qInput").addEventListener("keydown", function (e) { if (e.key === "Enter") submitInput(); });
+$("btnGuessMode").addEventListener("click", function () { guessMode = true; updateAskUI(); $("qInput").focus(); });
+$("btnCancelGuess").addEventListener("click", function () { guessMode = false; updateAskUI(); });
+
+// 回答ボタン（⭕✖△）：#answerBtns の子ボタンに正しく登録する
+var ansBtns = document.querySelectorAll("#answerBtns .ans-btn");
+for (var ai = 0; ai < ansBtns.length; ai++) {
+  ansBtns[ai].addEventListener("click", function () { answerQuestion(this.dataset.mark); });
+}
+$("btnJudgeOk").addEventListener("click", function () { judgeGuess(true); });
+$("btnJudgeNg").addEventListener("click", function () { judgeGuess(false); });
+
+$("btnResyncWait").addEventListener("click", function () { requestResync(); });
+$("btnResyncSetup").addEventListener("click", function () { requestResync(); });
+
+$("btnNextRound").addEventListener("click", function () {
+  this.disabled = true;
+  $("resultNote").textContent = "お題設定へもどります…";
+  send({ t: "next" });
+  matchNo++;
+  startSetup();
+});
+$("btnEndGame").addEventListener("click", function () {
+  send({ t: "bye" });
+  connOpenFlag = false;
+  backToMenu();
+});
+</script>
+</body>
+</html>
